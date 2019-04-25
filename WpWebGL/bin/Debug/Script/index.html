@@ -48,30 +48,12 @@
     <script src="./WPVector3.js"></script>
     <script src="./WPMatrix4x4.js"></script>
     <script src="./WPCube.js"></script>
-    <script src="./gl-matrix.js"></script>
+    <script src="./WPShader.js"></script>
+    <script src="./WPFileLoader.js"></script>
     
-    <script id="vertexShader" type="x-shader/x-vertex">
-        attribute vec4 a_Position;
-        attribute vec4 a_Color;
-        uniform mat4 u_MvpMatrix;
-        varying vec4 v_Color;
-
-        void main(){
-            gl_Position = u_MvpMatrix * a_Position;
-            v_Color = a_Color;
-        }
-    </script>
-    <script id="fragmentShader" type="x-shader/x-vertex">
-        precision lowp float;
-
-        varying vec4 v_Color;
-
-        void main() {
-            gl_FragColor = v_Color;
-        }
-    </script>
-
     <script type="text/javascript">
+        var Editor = typeof window.external.EditorLoadFileText != 'undefined';
+
         var renderCanvas = document.getElementById("renderCanvas");
         var gl = renderCanvas.getContext("experimental-webgl");
         //var gl = renderCanvas.getContext("webgl") || renderCanvas.getContext("experimental-webgl");
@@ -80,28 +62,6 @@
         var ctx = canvas2d.getContext("2d");
         ctx.font = "20px Arial";
         ctx.textAlign = "left";
-
-        // setup gl
-        var vs = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vs, document.getElementById("vertexShader").textContent);
-        gl.compileShader(vs);
-        if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-            alert(gl.getShaderInfoLog(vs));
-        }
-        var fs = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fs, document.getElementById("fragmentShader").textContent);
-        gl.compileShader(fs);
-        if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-            alert(gl.getShaderInfoLog(fs));
-        }
-        var sp = gl.createProgram();
-        gl.attachShader(sp, vs);
-        gl.attachShader(sp, fs);
-        gl.linkProgram(sp);
-        if(!gl.getProgramParameter(sp, gl.LINK_STATUS)){
-            alert(gl.getProgramInfoLog(sp));
-        }
-        gl.useProgram(sp);
 
         var width = window.innerWidth;
         var height = window.innerHeight;
@@ -128,36 +88,7 @@
             var viewMat = WPMatrix4x4.WorldToCameraMatrix(camPos, camLookAt, camUp);
             var mvpMat = WPMatrix4x4.Mul(projMat, WPMatrix4x4.Mul(viewMat, cubeMat));
 
-            //alert(WPMatrix4x4.ToString(cubeMat) + WPMatrix4x4.ToString(viewMat) + WPMatrix4x4.ToString(projMat) + WPMatrix4x4.ToString(mvpMat))
-
-            //var mT = mat4.create();
-            //mat4.fromTranslation(mT, cubePos);
-            //var mS = mat4.create();
-            //mat4.fromScaling(mS, cubeScale);
-            //var mR = mat4.create();
-            //var qR = quat.create();
-            //quat.fromEuler(qR, cubeEulerAngle[0], cubeEulerAngle[1], cubeEulerAngle[2]);
-            //var mTRS = mat4.create();
-            //mat4.fromRotationTranslationScale(mTRS, qR, cubePos, cubeScale)
-            ////alert(mat4.str(cubeMat) + "\n" +  mat4.str(mTRS));
-            //cubeMat = mTRS;
-            //var mP = mat4.create();
-            //mat4.perspective(mP, 60 * WPMath.Deg2Rad, aspect, 0.03, 100);
-            //var mV = mat4.create();
-            //mat4.lookAt(mV, camPos, camLookAt, camUp);
-            ////alert(mat4.str(mP) + "\n" + mat4.str(mV));
-            //mvpMat = mat4.create();
-            //mvpMat = mat4.multiply(mvpMat, mV, mTRS);
-            //mvpMat = mat4.multiply(mvpMat, mP, mvpMat);
-            ////alert(mat4.str(mvpMat));
-
-            var u_MvpMatrix = gl.getUniformLocation(sp, "u_MvpMatrix");
-            gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMat);
-
-            gl.enable(gl.DEPTH_TEST);
-            gl.enable(gl.CULL_FACE);
-            gl.cullFace(gl.BACK);
-            WPCube.Draw(sp);
+            WPCube.Draw(gl, mvpMat);
 
             ctx.clearRect(0, 0, canvas2d.width, canvas2d.height);
             ctx.fillText("frame: " + Time.frameCount, 0, 20, 150);
