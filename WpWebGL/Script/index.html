@@ -75,19 +75,23 @@
             gl.clearColor(0, 0.7, 0.9, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, 0);
 
-            var cubePos = [0, 0, 5];
-            var cubeScale = [1, 1, 1];
-            var cubeEulerAngle = [45, Time.totalTime * 20, 0];
-            var cubeMat = WPMatrix4x4.TRS(cubePos, cubeEulerAngle, cubeScale);
-
             var aspect = width / height;
             var camPos = [0, 0, 0];
             var camLookAt = [0, 0, 1];
             var camUp = [0, 1, 0];
             var projMat = WPMatrix4x4.PerspectiveProjectionMatrix(60, aspect, 0.03, 100);
             var viewMat = WPMatrix4x4.WorldToCameraMatrix(camPos, camLookAt, camUp);
-            var mvpMat = WPMatrix4x4.Mul(projMat, WPMatrix4x4.Mul(viewMat, cubeMat));
 
+            var cubeMat = WPMatrix4x4.TRS([0, 0, 5], [45, Time.totalTime * 20, 0], [1, 1, 1]);
+            var mvpMat = WPMatrix4x4.Mul(projMat, WPMatrix4x4.Mul(viewMat, cubeMat));
+            WPCube.Draw(gl, mvpMat);
+
+            cubeMat = WPMatrix4x4.TRS([4, 0, 7], [0, Time.totalTime * 20, 45], [1, 2, 1]);
+            mvpMat = WPMatrix4x4.Mul(projMat, WPMatrix4x4.Mul(viewMat, cubeMat));
+            WPCube.Draw(gl, mvpMat);
+
+            cubeMat = WPMatrix4x4.TRS([-4, 0, 7], [45, -Time.totalTime * 20, 45], [1, 1, 3]);
+            mvpMat = WPMatrix4x4.Mul(projMat, WPMatrix4x4.Mul(viewMat, cubeMat));
             WPCube.Draw(gl, mvpMat);
 
             ctx.clearRect(0, 0, canvas2d.width, canvas2d.height);

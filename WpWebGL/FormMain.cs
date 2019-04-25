@@ -42,7 +42,7 @@ namespace WpWebGL
             string ret = "";
             try
             {
-                ret = System.IO.File.ReadAllText(filePath);
+                ret = System.IO.File.ReadAllText("Script/" + filePath);
             }
             catch (Exception e)
             {

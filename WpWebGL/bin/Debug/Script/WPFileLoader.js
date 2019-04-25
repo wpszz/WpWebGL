@@ -6,7 +6,7 @@ var WPFileLoader = new function () {
 
     this.Load = function (filePath) {
         if (Editor) {
-            var ret = window.external.EditorLoadFileText("Script/" + filePath);
+            var ret = window.external.EditorLoadFileText(filePath);
             return ret;
         }
         else {
