@@ -1,0 +1,197 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WP WebGL</title>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        #canvas2d {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            /*width: 200px;
+            height: 100px;*/
+            touch-action: none;
+            border: solid #000000;
+            background-color: rgba(255, 255, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas" background-color:cornflowerblue">
+        Don't support HTML5 canvas
+    </canvas>
+
+    <canvas id="canvas2d" width="150" height="100">
+        Don't support HTML5 canvas
+    </canvas>
+
+    <script src="./Utils.js"></script>
+    <script src="./Clock.js"></script>
+    <script src="./Time.js"></script>
+    <script src="./WPMath.js"></script>
+    <script src="./WPVector3.js"></script>
+    <script src="./WPMatrix4x4.js"></script>
+    <script src="./WPCube.js"></script>
+    <script src="./gl-matrix.js"></script>
+    
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec4 a_Position;
+        attribute vec4 a_Color;
+        uniform mat4 u_MvpMatrix;
+        varying vec4 v_Color;
+
+        void main(){
+            gl_Position = u_MvpMatrix * a_Position;
+            v_Color = a_Color;
+        }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-vertex">
+        precision lowp float;
+
+        varying vec4 v_Color;
+
+        void main() {
+            gl_FragColor = v_Color;
+        }
+    </script>
+
+    <script type="text/javascript">
+        var renderCanvas = document.getElementById("renderCanvas");
+        var gl = renderCanvas.getContext("experimental-webgl");
+        //var gl = renderCanvas.getContext("webgl") || renderCanvas.getContext("experimental-webgl");
+
+        var canvas2d = document.getElementById("canvas2d");
+        var ctx = canvas2d.getContext("2d");
+        ctx.font = "20px Arial";
+        ctx.textAlign = "left";
+
+        // setup gl
+        var vs = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vs, document.getElementById("vertexShader").textContent);
+        gl.compileShader(vs);
+        if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(vs));
+        }
+        var fs = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fs, document.getElementById("fragmentShader").textContent);
+        gl.compileShader(fs);
+        if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(fs));
+        }
+        var sp = gl.createProgram();
+        gl.attachShader(sp, vs);
+        gl.attachShader(sp, fs);
+        gl.linkProgram(sp);
+        if(!gl.getProgramParameter(sp, gl.LINK_STATUS)){
+            alert(gl.getProgramInfoLog(sp));
+        }
+        gl.useProgram(sp);
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            Time.Update();
+
+            //gl.viewport(0, 0, width, height);
+            gl.clearColor(0, 0.7, 0.9, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, 0);
+
+            var cubePos = [0, 0, 5];
+            var cubeScale = [1, 1, 1];
+            var cubeEulerAngle = [45, Time.totalTime * 20, 0];
+            var cubeMat = WPMatrix4x4.TRS(cubePos, cubeEulerAngle, cubeScale);
+
+            var aspect = width / height;
+            var camPos = [0, 0, 0];
+            var camLookAt = [0, 0, 1];
+            var camUp = [0, 1, 0];
+            var projMat = WPMatrix4x4.PerspectiveProjectionMatrix(60, aspect, 0.03, 100);
+            var viewMat = WPMatrix4x4.WorldToCameraMatrix(camPos, camLookAt, camUp);
+            var mvpMat = WPMatrix4x4.Mul(projMat, WPMatrix4x4.Mul(viewMat, cubeMat));
+
+            //alert(WPMatrix4x4.ToString(cubeMat) + WPMatrix4x4.ToString(viewMat) + WPMatrix4x4.ToString(projMat) + WPMatrix4x4.ToString(mvpMat))
+
+            //var mT = mat4.create();
+            //mat4.fromTranslation(mT, cubePos);
+            //var mS = mat4.create();
+            //mat4.fromScaling(mS, cubeScale);
+            //var mR = mat4.create();
+            //var qR = quat.create();
+            //quat.fromEuler(qR, cubeEulerAngle[0], cubeEulerAngle[1], cubeEulerAngle[2]);
+            //var mTRS = mat4.create();
+            //mat4.fromRotationTranslationScale(mTRS, qR, cubePos, cubeScale)
+            ////alert(mat4.str(cubeMat) + "\n" +  mat4.str(mTRS));
+            //cubeMat = mTRS;
+            //var mP = mat4.create();
+            //mat4.perspective(mP, 60 * WPMath.Deg2Rad, aspect, 0.03, 100);
+            //var mV = mat4.create();
+            //mat4.lookAt(mV, camPos, camLookAt, camUp);
+            ////alert(mat4.str(mP) + "\n" + mat4.str(mV));
+            //mvpMat = mat4.create();
+            //mvpMat = mat4.multiply(mvpMat, mV, mTRS);
+            //mvpMat = mat4.multiply(mvpMat, mP, mvpMat);
+            ////alert(mat4.str(mvpMat));
+
+            var u_MvpMatrix = gl.getUniformLocation(sp, "u_MvpMatrix");
+            gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMat);
+
+            gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.CULL_FACE);
+            gl.cullFace(gl.BACK);
+            WPCube.Draw(sp);
+
+            ctx.clearRect(0, 0, canvas2d.width, canvas2d.height);
+            ctx.fillText("frame: " + Time.frameCount, 0, 20, 150);
+            ctx.fillText("delta: " + Time.deltaTime.toFixed(5), 0, 40, 150);
+            ctx.fillText("total: " + Time.totalTime.toFixed(3), 0, 60, 150);
+            ctx.fillText("fps: " + Time.fps.toFixed(3), 0, 80, 150);
+        }
+
+        animate();
+
+        window.addEventListener('resize', function () {
+            width = window.innerWidth;
+            height = window.innerHeight;
+        });
+
+        window.addEventListener('message', function (event) {
+            console.log("message: " + event.data.toString());
+        })
+
+        // disable context menu of right botton
+        document.oncontextmenu = function () {
+            return false;
+        }
+
+        // disable content select
+        document.onselectstart = function () {
+            return false;
+        }
+
+        // disable copy
+        document.oncopy = function () {
+            return false;
+        }
+    </script>
+</body>
+
+</html>
