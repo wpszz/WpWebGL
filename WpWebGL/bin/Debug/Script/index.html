@@ -58,20 +58,26 @@
         var gl = renderCanvas.getContext("experimental-webgl");
         //var gl = renderCanvas.getContext("webgl") || renderCanvas.getContext("experimental-webgl");
 
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        gl.canvas.width = renderCanvas.clientWidth;
+        gl.canvas.height = renderCanvas.clientHeight;
+        //alert(gl.canvas.width + "  " + gl.canvas.height);
+        //alert(gl.drawingBufferWidth + "  " + gl.drawingBufferHeight);
+
         var canvas2d = document.getElementById("canvas2d");
         var ctx = canvas2d.getContext("2d");
         ctx.font = "20px Arial";
         ctx.textAlign = "left";
 
-        var width = window.innerWidth;
-        var height = window.innerHeight;
+
 
         function animate() {
             requestAnimationFrame(animate);
 
             Time.Update();
 
-            //gl.viewport(0, 0, width, height);
+            gl.viewport(0, 0, width, height);
             gl.clearColor(0, 0.7, 0.9, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, 0);
 
@@ -106,6 +112,8 @@
         window.addEventListener('resize', function () {
             width = window.innerWidth;
             height = window.innerHeight;
+            gl.canvas.width = width;
+            gl.canvas.height = height;
         });
 
         window.addEventListener('message', function (event) {
